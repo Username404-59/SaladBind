@@ -5,9 +5,10 @@ const packageJson = require('../package.json');
 const inquirer = require('inquirer');
 const fs = require("fs")
 const https = require('https');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const si = require("systeminformation");
 const { dataDirectory, saladbind_directory} = require("./setup");
+const path = require("path");
 
 if (!fs.existsSync(dataDirectory)) {
 	fs.mkdirSync(dataDirectory);
@@ -144,16 +145,13 @@ const installNew = async function(location) {
 				if (platform == "win32") {
 					spinner.succeed(chalk.bold.green(`${filename} has been downloaded! Opening in 5 seconds.`));
 					setTimeout(function() {
-
-						exec(`start ${saladbind_directory}/${filename}`, () => {})
+						let command_arguments = [path.join(saladbind_directory, filename)]
+						execFile('start', command_arguments)
 						console.log(chalk.bold.red("Closing this window. Please do not touch anything until instructed."))
 						setTimeout(function() { process.exit(0) }, 5000)
-
 					}, 5000)
-
 				} else {
 					spinner.succeed(chalk.bold.green(`${filename} has been downloaded! You may now close this window.`)); //i dont have a linux or macos machine so idk how to open new processes on them.
-
 				}
 			}, 1000)
 		})
