@@ -26,7 +26,7 @@ const updateCheck = new Promise((resolve, reject) => {
 		if (instances.length > 1) {
 			setTimeout(function() {
 				for (i = 0; i < instances.length; i++) {
-					fs.unlink(`./${instances[i]}`, function() {})
+					fs.unlink(`${saladbind_directory}/${instances[i]}`, function() {})
 				}
 			}, 5000)
 		}

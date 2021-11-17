@@ -4,7 +4,7 @@ const inquirer = require('inquirer');
 const fs = require('fs');
 const path = require('path');
 var firstTime = false;
-const saladbind_directory = (__dirname.startsWith("/snapshot") || __dirname.startsWith("C:\\snapshot")) ? process.execPath.substring(0, process.execPath.lastIndexOf('/')) : __dirname;
+const saladbind_directory = (__dirname.startsWith("/snapshot") || __dirname.startsWith("C:\\snapshot")) ? process.execPath.substring(0, process.execPath.lastIndexOf(path.sep)) : __dirname;
 const dataDirectory = `${saladbind_directory}/data`;
 const configFile = `${dataDirectory}/config.json`;
 
