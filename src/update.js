@@ -7,19 +7,20 @@ const fs = require("fs")
 const https = require('https');
 const { exec } = require('child_process');
 const si = require("systeminformation");
+const { dataDirectory, saladbind_directory} = require("./setup");
 
-if (!fs.existsSync("./data")) {
-	fs.mkdirSync("./data");
+if (!fs.existsSync(dataDirectory)) {
+	fs.mkdirSync(dataDirectory);
 }
 
 const updateCheck = new Promise((resolve, reject) => {
-		let dirCont = fs.readdirSync("./");
+		let dirContent = fs.readdirSync(saladbind_directory);
 		let instances = []
 		var i = 0;
 
-		for (i = 0; i < dirCont.length; i++) {
-			if (dirCont[i].toLowerCase().includes("saladbind") || dirCont[i].toLowerCase().includes("salad bind")) {
-				instances.push(dirCont[i])
+		for (i = 0; i < dirContent.length; i++) {
+			if (dirContent[i].toLowerCase().includes("saladbind") || dirContent[i].toLowerCase().includes("salad bind")) {
+				instances.push(dirContent[i])
 			}
 		}
 		if (instances.length > 1) {
@@ -93,7 +94,6 @@ const updateCheck = new Promise((resolve, reject) => {
 
 async function startUpdate() {
 	spinner = ora(`Downloading SaladBind v${version}`).start();
-	path = `/data/`
 	temp = await si.osInfo()
 	platform = temp.platform
 	if(platform == "Windows"){
@@ -101,13 +101,13 @@ async function startUpdate() {
 	}
 	if (platform == "win32") {
 		filename = files.win32.name
-		downloadFile(files.win32.file, `./${path}${filename}`, `SaladBind v${version}`)
+		downloadFile(files.win32.file, `${dataDirectory}/${filename}`, `SaladBind v${version}`)
 	} else if (platform == "linux") {
 		filename = files.linux.name
-		downloadFile(files.linux.file, `./${path}${filename}`, `SaladBind v${version}`)
+		downloadFile(files.linux.file, `${dataDirectory}/${filename}`, `SaladBind v${version}`)
 	} else if (platform == "darwin") {
 		filename = files.macos.name
-		downloadFile(files.macos.file, `./${path}${filename}`, `SaladBind v${version}`)
+		downloadFile(files.macos.file, `${dataDirectory}/${filename}`, `SaladBind v${version}`)
 	}
 }
 
@@ -138,16 +138,14 @@ const downloadFile = async function(url, location, name) {
 
 const installNew = async function(location) {
 	spinner = ora(`Installing SaladBind v${version}. Please wait`).start();
-	fs.copyFile(`.${path}${filename}`, `./${filename}`, function() {
-		fs.unlink(`.${path}${filename}`, function() {
+	fs.copyFile(`${dataDirectory}/${filename}`, `${saladbind_directory}/${filename}`, function() {
+		fs.unlink(`${dataDirectory}/${filename}`, function() {
 			setTimeout(function() {
 				if (platform == "win32") {
 					spinner.succeed(chalk.bold.green(`${filename} has been downloaded! Opening in 5 seconds.`));
 					setTimeout(function() {
 
-						exec(`start ${filename}`, () => {
-
-						})
+						exec(`start ${saladbind_directory}/${filename}`, () => {})
 						console.log(chalk.bold.red("Closing this window. Please do not touch anything until instructed."))
 						setTimeout(function() { process.exit(0) }, 5000)
 
