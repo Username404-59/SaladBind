@@ -146,7 +146,6 @@ process.title = `${aprilfools ? "VegetableJoiner" : "SaladBind"} v${packageJson.
 			} else {
 				console.log(chalk.bold.green(`SaladBind v${packageJson.version}`));
 				console.clear();
-				startMenuCheck();
 				menu(false);
 			}
 	})
