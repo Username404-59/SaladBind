@@ -648,15 +648,9 @@ async function startMiner(minerData, algo, pool, region, advancedCommands) {
 	defaultArgs.pass = ""
 	if (minerData.parameters.wallet != "") { // poo
 		if(minerData.parameters.wallet == "PHOENIX") {
-			if(algo == "ethash") {
-				defaultArgs.wallet = `-wal ${wallet}.${config.minerId}`
-				defaultArgs.algo = `-coin eth`
-				defaultArgs.pool = `${minerData.parameters.pool} ${pool.algos[algo].host.replace("REGION", region)}${minerData.miner == "PhoenixMiner" && pool.name == "NiceHash" ? " -proto 4 " : ""}${minerData.miner == "PhoenixMiner" && hasAMD ? " -clKernel 0 " : ""}${minerData.miner == "lolMiner" ? " --pers BgoldPoW " : ""}`
-			} else if(algo == "etchash") {
-				defaultArgs.wallet = `-wal ${wallet}.${config.minerId}`
-				defaultArgs.algo = `-coin etc`
-				defaultArgs.pool = `${minerData.parameters.pool} ${pool.algos[algo].host.replace("REGION", region)}${minerData.miner == "PhoenixMiner" && pool.name == "NiceHash" ? " -proto 4 " : ""}${minerData.miner == "PhoenixMiner" && hasAMD ? " -clKernel 0 " : ""}${minerData.miner == "lolMiner" ? " --pers BgoldPoW " : ""}`
-			}
+			defaultArgs.wallet = `-wal ${wallet}.${config.minerId}`
+			defaultArgs.algo = `-coin ${algo == "ethash" ? 'eth' : (algo == "ethash" ? 'etc' : '')}`
+			defaultArgs.pool = `${minerData.parameters.pool} ${pool.algos[algo].host.replace("REGION", region)}${minerData.miner == "PhoenixMiner" && pool.name == "NiceHash" ? " -proto 4 " : ""}${minerData.miner == "PhoenixMiner" && hasAMD ? " -clKernel 0 " : ""}${minerData.miner == "lolMiner" ? " --pers BgoldPoW " : ""}`
 		} else {
 			defaultArgs.wallet = `${minerData.parameters.wallet} ${wallet}.${config.minerId}${minerData.miner == "T-Rex" ? ` -w ${config.minerId} ` : ""}`
 			if (minerData.parameters.algo != "") {
@@ -713,16 +707,13 @@ async function startMiner(minerData, algo, pool, region, advancedCommands) {
 
 		finalArguments.push(advancedCommands)
 		let miner = spawn(`cd ${dataDirectory}/miners/${minerData.miner}-${minerData.version} && ${userPlatform == "linux" || userPlatform == "darwin" ? "./" : ""}${minerData.parameters.fileName}`, finalArguments, {stdio: 'inherit', shell: true, env : { FORCE_COLOR: true }}) //its an array dumbass
-		miner.on('close', (code) => {
+		onDead = () => {
 			console.log(`\nMiner stopped!\n`);
 			stopped();
-			require("./index").menu(false);
-		});
-		miner.on('SIGINT', () => {
-			console.log(`\nMiner stopped!\n`);
-			stopped();
-			require("./index").menu(false);
-		});
+			menu(false);
+		}
+		miner.on('close', onDead);
+		miner.on('SIGINT', onDead);
 		process.on('SIGINT', () => {
 			console.log(chalk.yellow("Returning to SaladBind menu..."));
 		});
@@ -754,7 +745,7 @@ fs.writeFileSync(`${dataDirectory}/last.json`, JSON.stringify({
 		data: args.data,
 		advancedCommands: args.advancedCommands
 	}));
-};
+}
 
 async function quick(){
 	let details;
@@ -785,8 +776,8 @@ async function quick(){
 			require("./index").menu(true)
 		},3000)
 	}
-
 }
+
 module.exports = { 
 	run,
 	quick

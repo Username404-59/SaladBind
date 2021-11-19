@@ -5,9 +5,9 @@ const packageJson = require('../package.json');
 const inquirer = require('inquirer');
 const fs = require("fs")
 const https = require('https');
-const { execFile } = require('child_process');
+const { exec } = require('child_process');
 const si = require("systeminformation");
-const { dataDirectory, saladbind_directory} = require("./setup");
+const { dataDirectory, saladbind_directory, isExecutable } = require("./setup");
 const path = require("path");
 
 if (!fs.existsSync(dataDirectory)) {
@@ -44,11 +44,6 @@ const updateCheck = new Promise((resolve, reject) => {
 				clearTimeout(timer);
 				if(updateFailed) return; // to not mess up stuff if it recovers
 				version = data.version
-				files = { //files to download if the user decides to autoupdate.
-					"win32": { "file": `https://github.com/LITdevs/SaladBind/releases/download/v${version}/saladbind-win.exe`, "name": `SaladBind-win-${version}.exe` },
-					"linux": { "file": `https://github.com/LITdevs/SaladBind/releases/download/v${version}/saladbind-linux`, "name": `SaladBind-linux-${version}` },
-					"darwin": { "file": `https://github.com/LITdevs/SaladBind/releases/download/v${version}/saladbind-macos`, "name": `SaladBind-macos-${version}` }
-				}
 				if (version !== packageJson.version) {
 					spinner.succeed(chalk.bold.green(`SaladBind ${data.version} is available!`));
 					data.changelog.forEach(item => {
@@ -79,9 +74,7 @@ const updateCheck = new Promise((resolve, reject) => {
 					spinner.stop();
 					resolve();
 				}
-
 			})
-
 	})
 	.catch(err => {
 		spinner.fail(chalk.bold.red(`Could not check for updates, please try again later.`));
@@ -89,36 +82,24 @@ const updateCheck = new Promise((resolve, reject) => {
 		setTimeout(() => {
 			resolve();
 		}, 3500);
-
 	});
 
 
 async function startUpdate() {
 	spinner = ora(`Downloading SaladBind v${version}`).start();
-	temp = await si.osInfo()
-	platform = temp.platform
-	if(platform == "Windows"){
-		platform = "win32"
+	platform = (await si.osInfo()).platform;
+	if (platform == "darwin") {
+		platform = "macos"
 	}
-	if (platform == "win32") {
-		filename = files.win32.name
-		downloadFile(files.win32.file, `${dataDirectory}/${filename}`, `SaladBind v${version}`)
-	} else if (platform == "linux") {
-		filename = files.linux.name
-		downloadFile(files.linux.file, `${dataDirectory}/${filename}`, `SaladBind v${version}`)
-	} else if (platform == "darwin") {
-		filename = files.macos.name
-		downloadFile(files.macos.file, `${dataDirectory}/${filename}`, `SaladBind v${version}`)
-	}
+	let link = `https://github.com/LITdevs/SaladBind/releases/download/v${version}/saladbind-${(platform == "Windows") ? "win.exe" : platform}`
+	filename = link.substring(link.lastIndexOf('/') + 1)
+	await downloadFile(link, `${dataDirectory}/${filename}`, `SaladBind v${version}`)
 }
-
-
-
 
 const downloadFile = async function(url, location, name) {
 	return new Promise(async(resolve, reject) => {
 		const stream = fs.createWriteStream(location);
-		const request = https.get(url, function(response) {
+		https.get(url, function(response) {
 			if (parseInt(response.statusCode) >= 200 && parseInt(response.statusCode) < 300) {
 				response.pipe(stream);
 				stream.on('finish', function() {
@@ -128,9 +109,7 @@ const downloadFile = async function(url, location, name) {
 					});
 				});
 			} else {
-				downloadFile(response.headers.location, location, name).then(() => {
-					return
-				});
+				downloadFile(response.headers.location, location, name);
 			}
 		});
 	});
@@ -138,33 +117,20 @@ const downloadFile = async function(url, location, name) {
 
 
 const installNew = async function(location) {
-	spinner = ora(`Installing SaladBind v${version}. Please wait`).start();
-	fs.copyFile(`${dataDirectory}/${filename}`, `${saladbind_directory}/${filename}`, function() {
-		fs.unlink(`${dataDirectory}/${filename}`, function() {
-			setTimeout(function() {
-				if (platform == "win32") {
-					spinner.succeed(chalk.bold.green(`${filename} has been downloaded! Opening in 5 seconds.`));
-					setTimeout(function() {
-						let command_arguments = [path.join(saladbind_directory, filename)]
-						execFile('start', command_arguments)
-						console.log(chalk.bold.red("Closing this window. Please do not touch anything until instructed."))
-						setTimeout(function() { process.exit(0) }, 5000)
-					}, 5000)
-				} else {
-					spinner.succeed(chalk.bold.green(`${filename} has been downloaded! You may now close this window.`)); //i dont have a linux or macos machine so idk how to open new processes on them.
-				}
-			}, 1000)
-		})
-	})
-
-
-
-
+	let isWindows = platform == "Windows"
+	if (isExecutable) {
+		let argumentsOfMove = []
+		if (platform == "Windows") {
+			argumentsOfMove.push(['-y'])
+		}
+		argumentsOfMove.push([`${dataDirectory}/${filename}`, process.execPath])
+		exec(`${isWindows ? 'rd' : 'rm'} ${process.execPath} && ${isWindows ? 'move -y' : 'mv'} ${dataDirectory}/${filename} ${saladbind_directory}/${filename}`)
+		spinner.succeed(chalk.bold.green(`${filename} has been updated!`))
+	}
+	if (isWindows) {
+		process.exit(0)
+	}
 }
-
-
-
-
 
 module.exports = {
 	updateCheck,

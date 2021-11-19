@@ -7,9 +7,7 @@ process.on("uncaughtException", err => {
 		console.clear();
 		try {
 			startMenuCheck();
-		} catch {
-
-		}
+		} catch {}
 		console.log(`${chalk.bold.red("Oh noes! A scary error!")}\nTechnical details: ${err.message}`);
 		if(err.message.includes("EPERM")) console.log(chalk.blueBright("This *could* be your antivirus."))
 		console.log("\nPlease join our Discord server (https://discord.gg/HfBAtQ2afz) and send us your log file.\nIt'll be created where you downloaded SaladBind, as 'saladbind_error.txt'.");	
@@ -121,7 +119,8 @@ presence.state.on('ready', () => {
 	presence.enable();
 	presence.mainmenu();
 })
-if(process.argv[process.argv.length-1] == "-d") {
+
+if (process.argv[process.argv.length-1] == "-d") {
 	try {
 		fs.writeFileSync("saladbind-debug.txt", JSON.stringify(getDebugData(), null, " "));
 		console.log(`\nWrote to "${process.cwd()}/saladbind-debug.txt" successfully\n`)
@@ -136,20 +135,22 @@ if(process.argv[process.argv.length-1] == "-d") {
 }
 console.clear();
 
-const aprilfools = new Date().getMonth() == 3 && new Date().getDate() == 1;
+const date = new Date()
+const aprilfools = date.getMonth() == 3 && date.getDate() == 1;
 process.title = `${aprilfools ? "VegetableJoiner" : "SaladBind"} v${packageJson.version}`;
 
 (async() => {
 	update.updateCheck.then(() => {
-			if (!fs.existsSync(configFile)) {
-				run(false);
-			} else {
-				console.log(chalk.bold.green(`SaladBind v${packageJson.version}`));
-				console.clear();
-				menu(false);
-			}
+		if (!fs.existsSync(configFile)) {
+			run(false);
+		} else {
+			console.log(chalk.bold.green(`SaladBind v${packageJson.version}`));
+			console.clear();
+			menu(false);
+		}
 	})
 })();
+
 async function menu(clear) {
 	if (clear == undefined || clear == true) {
 		console.clear();
@@ -199,7 +200,7 @@ if (fs.existsSync(`${dataDirectory}/last.json`)){
 			break;
 		case 'config':
 			presence.configuring("Changing settings")
-			require("./setup").run();
+			run();
 			break;
 		case 'changes':
 			presence.configuring("Reading the changelog")
