@@ -40,6 +40,10 @@ All of the money you mine using SaladBind goes to Salad, and all Salad boosts an
 				value: "miner"
 			},
 			{
+				name: `Bypass GPU Checks ${configData.bypassGPUChecks ? chalk.green("(Enabled)") : chalk.redBright("(Disabled)")}`,
+				value: "bypass"
+			},
+			{
 				name: `${firstTime ? chalk.greenBright("Finish") : chalk.redBright("Go Back")}`,
 				value: "back"
 			}
@@ -56,6 +60,9 @@ All of the money you mine using SaladBind goes to Salad, and all Salad boosts an
 	if (prompt.settings == "discord") {
 		await toggleDiscord()
 		return await run();
+	} else if (prompt.settings == "bypass") {
+		await toggleBypassGpu()
+		return await run();
 	} else if (prompt.settings == "miner") {
 		miner()
 	}
@@ -70,7 +77,15 @@ async function toggleDiscord() {
 	}
 	await save("discordPresence", !discordPresence);
 }
-
+async function toggleBypassGpu() {
+	let bypassGPUChecks;
+	try {
+		bypassGPUChecks = await JSON.parse(fs.readFileSync("./data/config.json")).bypassGPUChecks;
+	} catch {
+		bypassGPUChecks = false;
+	}
+	await save("bypassGPUChecks", !bypassGPUChecks);
+}
 async function miner(){
 	const promptResult = await inquirer.prompt([{
 		type: 'list',
@@ -247,4 +262,3 @@ module.exports = {
 	saladbind_directory, dataDirectory, configFile,
 	run
 }
-
